@@ -3,6 +3,8 @@ import {
   assert,
 } from "https://deno.land/std@0.53.0/testing/asserts.ts";
 
+// Run this example yourself with `deno run --allow-net examples/fetch-wrapper.ts
+
 async function saveFetch(url: string): Promise<Matcher<string>> {
   const response: Maybe<string> = await fetch(url).then(
     (res) => res.text(),
@@ -27,14 +29,24 @@ ok.map((s) => s.length).ok((val) => {
 const notOk: Matcher<string> = await saveFetch("https://example.cpm");
 assert(notOk.isNil());
 
-// It is save to work with the values even if we do not know if
-// they are nil
+// Safe access to the value is not very comfortable in an if block:
+if (notOk.isOk()) {
+  // Would prefer not to unwrap, because here we should be able to know
+  // that the value is not nil.
+  console.log(notOk.unwrap());
+  assert(false);
+} else {
+  console.log("I run if the value is not ok 1");
+  assert(true);
+}
 
-notOk.map((s) => s.length).ok((val) => {
-  console.log("I will not be evaluated");
+// You can use .ok() and .nil() as an easy to access alternative:
+
+notOk.ok((val) => {
+  // Value is already unwrapped for us
+  console.log(val);
   assert(false);
 }).nil(() => {
-  // Runs if value does not exist
-  console.log("Value is nil");
+  console.log("I run if the value is not ok 2");
   assert(true);
 });
