@@ -19,11 +19,11 @@ export function isNil(value: Maybe<unknown>): value is null | undefined {
  * @param maybe Value that is possibly null or undefined
  */
 export function match<T>(maybe: Maybe<T>): Matcher<T> {
-  return new Matcher(maybe);
+  return new Matcher(Object.freeze(maybe));
 }
 
 class NilMatcher<T> {
-  constructor(protected readonly _value: Maybe<T>) {}
+  constructor(protected readonly _value: Readonly<Maybe<T>>) {}
 
   /**
    * Checks if value of Matcher is Nil and runs given callback
@@ -44,7 +44,7 @@ export class Matcher<T> extends NilMatcher<T> {
    * if it is not nil
    * @param fn Callback to run if Matcher value is not nil
    */
-  ok(fn: (val: T) => void): NilMatcher<T> {
+  ok(fn: (val: Readonly<T>) => void): NilMatcher<T> {
     if (!isNil(this._value)) {
       fn(this._value);
     }
@@ -74,7 +74,7 @@ export class Matcher<T> extends NilMatcher<T> {
    *
    * @param fn Function to use to map value
    */
-  map<U>(fn: (val: T) => Maybe<U>): Matcher<U> {
+  map<U>(fn: (val: Readonly<T>) => Maybe<U>): Matcher<U> {
     if (isNil(this._value)) {
       return match<U>(null);
     }
@@ -88,9 +88,9 @@ export class Matcher<T> extends NilMatcher<T> {
    *
    * @param defaultValue Value to return if Matcher value is nil
    */
-  unwrapOr(defaultValue: T): T {
+  unwrapOr(defaultValue: T): Readonly<T> {
     if (isNil(this._value)) {
-      return defaultValue;
+      return Object.freeze(defaultValue);
     }
 
     return this._value;
@@ -100,7 +100,7 @@ export class Matcher<T> extends NilMatcher<T> {
    * Tries to get value out of matcher. Will throw error if
    * value is nil.
    */
-  unwrap(): T | never {
+  unwrap(): Readonly<T> | never {
     if (isNil(this._value)) {
       throw new Error(UNWRAP_ERROR_MSG);
     }

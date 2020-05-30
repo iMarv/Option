@@ -34,6 +34,15 @@ Deno.test({
 });
 
 Deno.test({
+  name: "maybe::match::freezes_value",
+  fn: () => {
+    const val = match("testi");
+
+    assert(Object.isFrozen(val.unwrap()));
+  },
+});
+
+Deno.test({
   name: "maybe::Matcher::unwrap::return_value",
   fn: () => {
     const original: Maybe<string> = "testi";
