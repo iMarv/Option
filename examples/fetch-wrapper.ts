@@ -25,6 +25,12 @@ ok.map((s) => s.length).ok((val) => {
   assert(val > 0);
 });
 
+// We can also get a mapped value back as a Maybe
+console.log("Page Size:", ok.map((s) => s.length).asMaybe());
+
+// Null values need to be handled manually now though
+console.log("Page Size:", ok.map(() => null).asMaybe());
+
 // Errors do not crash our program but can be handled properly
 const notOk: Matcher<string> = await saveFetch("https://example.cpm");
 assert(notOk.isNil());

@@ -23,7 +23,7 @@ export function match<T>(maybe: Maybe<T>): Matcher<T> {
 }
 
 class NilMatcher<T> {
-  constructor(protected readonly _value: Readonly<Maybe<T>>) {}
+  constructor(protected readonly _value: Readonly<Maybe<T>>) { }
 
   /**
    * Checks if value of Matcher is Nil and runs given callback
@@ -82,6 +82,10 @@ export class Matcher<T> extends NilMatcher<T> {
     return match<U>(fn(this._value));
   }
 
+  asMaybe(): Maybe<Readonly<T>> {
+    return this._value;
+  }
+
   /**
    * Tries to get value out of matcher. If value is nil, will
    * fall back to given default value
@@ -99,6 +103,8 @@ export class Matcher<T> extends NilMatcher<T> {
   /**
    * Tries to get value out of matcher. Will throw error if
    * value is nil.
+   * This is not considered safe, you should consider using `.ok()` to work with
+   * the value
    */
   unwrap(): Readonly<T> | never {
     if (isNil(this._value)) {
