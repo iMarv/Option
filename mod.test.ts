@@ -43,6 +43,26 @@ Deno.test({
 });
 
 Deno.test({
+  name: "maybe::Matcher::maybe::return_value",
+  fn: () => {
+    const original: Maybe<string> = "testi";
+    const value: Matcher<string> = match(original);
+
+    assertEquals(value.asMaybe(), original);
+  },
+});
+
+Deno.test({
+  name: "maybe::Matcher::maybe::return_mapped_value",
+  fn: () => {
+    const original: Maybe<string> = "testi";
+    const value: Matcher<string> = match(original).map((val) => `${val}2`);
+
+    assertEquals(value.asMaybe(), "testi2");
+  },
+});
+
+Deno.test({
   name: "maybe::Matcher::unwrap::return_value",
   fn: () => {
     const original: Maybe<string> = "testi";
