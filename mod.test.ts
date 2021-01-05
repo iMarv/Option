@@ -1,9 +1,9 @@
-import { match, isNil, Matcher, Maybe } from "./mod.ts";
+import { isNil, match, Matcher, Maybe } from "./mod.ts";
 import {
   assert,
   assertEquals,
   assertThrows,
-} from "https://deno.land/std@0.53.0/testing/asserts.ts";
+} from "https://deno.land/std@0.83.0/testing/asserts.ts";
 
 const UNWRAP_ERROR_MSG: string = "Called unwrap on nil value";
 

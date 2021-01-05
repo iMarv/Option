@@ -2,6 +2,14 @@ const UNWRAP_ERROR_MSG: string = "Called unwrap on nil value";
 
 export type Maybe<T> = null | undefined | T;
 
+export class UnsafeOperationError extends Error {
+  name: string = "UnsafeOperationError";
+
+  constructor(msg: string) {
+    super(msg);
+  }
+}
+
 /**
  * Equivalent to nodes `isNullOrUndefined`, asserts whether
  * given value is `null | undefined` or not
@@ -23,7 +31,7 @@ export function match<T>(maybe: Maybe<T>): Matcher<T> {
 }
 
 class NilMatcher<T> {
-  constructor(protected readonly _value: Readonly<Maybe<T>>) { }
+  constructor(protected _value: Readonly<Maybe<T>>) {}
 
   /**
    * Checks if value of Matcher is Nil and runs given callback
@@ -67,6 +75,20 @@ export class Matcher<T> extends NilMatcher<T> {
   }
 
   /**
+   * Changes value in matcher to given value if matcher value
+   * is nil
+   *
+   * @param fallback Fallback value if inner value is nil
+   */
+  or<R>(fallback: Maybe<R>): Matcher<R> {
+    if (isNil(this._value)) {
+      return new Matcher(fallback);
+    } else {
+      return new Matcher(this._value as unknown as R);
+    }
+  }
+
+  /**
    * Checks if Matcher value is not nil and applies given map
    * function to it.
    * Will return a matcher with nil-value and not apply map if
@@ -74,12 +96,20 @@ export class Matcher<T> extends NilMatcher<T> {
    *
    * @param fn Function to use to map value
    */
-  map<U>(fn: (val: Readonly<T>) => Maybe<U>): Matcher<U> {
+  map<R>(fn: (val: Readonly<T>) => Maybe<R>): Matcher<R> {
     if (isNil(this._value)) {
-      return match<U>(null);
+      return match<R>(null);
     }
 
-    return match<U>(fn(this._value));
+    return match<R>(fn(this._value));
+  }
+
+  mapOr<R>(mapFn: (value: T) => Maybe<R>, fallback: R): Matcher<R> {
+    return this.map(mapFn).or(fallback);
+  }
+
+  is(comparand: T): boolean {
+    return comparand === this._value;
   }
 
   asMaybe(): Maybe<Readonly<T>> {
@@ -108,9 +138,32 @@ export class Matcher<T> extends NilMatcher<T> {
    */
   unwrap(): Readonly<T> | never {
     if (isNil(this._value)) {
-      throw new Error(UNWRAP_ERROR_MSG);
+      throw new UnsafeOperationError(UNWRAP_ERROR_MSG);
     }
 
     return this._value;
+  }
+
+  expect(msg: string): Readonly<T> | never {
+    if (isNil(this._value)) {
+      throw new UnsafeOperationError(msg);
+    }
+
+    return this._value;
+  }
+
+  toPromise(): Promise<T> {
+    if (isNil(this._value)) {
+      return Promise.reject(UNWRAP_ERROR_MSG);
+    }
+    return Promise.resolve(this._value);
+  }
+
+  toJSON() {
+    return this.asMaybe();
+  }
+
+  toString() {
+    return (this._value ?? "null").toString();
   }
 }
