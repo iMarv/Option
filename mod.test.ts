@@ -36,7 +36,7 @@ Deno.test({
 Deno.test({
   name: "maybe::match::freezes_value",
   fn: () => {
-    const val = match("testi" as Maybe<string>);
+    const val = match("testi");
 
     assert(Object.isFrozen(val.unwrap()));
   },
@@ -45,7 +45,7 @@ Deno.test({
 Deno.test({
   name: "maybe::Matcher::maybe::return_value",
   fn: () => {
-    const original: Maybe<string> = "testi" as Maybe<string>;
+    const original: Maybe<string> = "testi";
     const value: Matcher<string> = match(original);
 
     assertEquals(value.asMaybe(), original);
@@ -55,7 +55,7 @@ Deno.test({
 Deno.test({
   name: "maybe::Matcher::maybe::return_mapped_value",
   fn: () => {
-    const original: Maybe<string> = "testi" as Maybe<string>;
+    const original: Maybe<string> = "testi";
     const value: Matcher<string> = match(original).map((val) => `${val}2`);
 
     assertEquals(value.asMaybe(), "testi2");
@@ -65,7 +65,7 @@ Deno.test({
 Deno.test({
   name: "maybe::Matcher::unwrap::return_value",
   fn: () => {
-    const original: Maybe<string> = "testi" as Maybe<string>;
+    const original: Maybe<string> = "testi";
     const value: Matcher<string> = match(original);
 
     assertEquals(value.unwrap(), original);
@@ -75,7 +75,7 @@ Deno.test({
 Deno.test({
   name: "maybe::Matcher::unwrap::throw_nil",
   fn: () => {
-    const value: Matcher<string> = match(null as Maybe<string>);
+    const value: Matcher<string> = match(null as unknown as string);
 
     assertThrows(
       () => {
@@ -90,7 +90,7 @@ Deno.test({
 Deno.test({
   name: "maybe::Matcher::unwrapOr::return_value",
   fn: () => {
-    const original: Maybe<string> = "testi" as Maybe<string>;
+    const original: Maybe<string> = "testi";
     const value: Matcher<string> = match(original);
 
     assertEquals(value.unwrapOr("testo"), original);
@@ -101,30 +101,17 @@ Deno.test({
   name: "maybe::Matcher::unwrapOr::return_default_on_nil",
   fn: () => {
     const expected: string = "testo";
-    const value: Matcher<string> = match(null as Maybe<string>);
+    const value: Matcher<string> = match(null as unknown as string);
 
     assertEquals(value.unwrapOr(expected), expected);
   },
 });
 
 Deno.test({
-  name: "maybe::Matcher::andThen::map_with_fn",
-  fn: () => {
-    type Ty = { p: Maybe<string> };
-    const num: Maybe<Ty> = { p: "testi" } as Maybe<Ty>;
-    const fn = (n: Ty): Matcher<string> => match(n.p);
-
-    const mt: Matcher<string> = match(num).andThen(fn);
-
-    assertEquals(mt.unwrap(), "testi");
-  },
-});
-
-Deno.test({
   name: "maybe::Matcher::map::map_with_fn",
   fn: () => {
-    const num: Maybe<number> = 1 as Maybe<number>;
-    const fn = (n: number): Maybe<string> => `${n}` as Maybe<string>;
+    const num: Maybe<number> = 1;
+    const fn = (n: number): Maybe<string> => `${n}`;
 
     const mt: Matcher<string> = match(num).map(fn);
 
@@ -135,7 +122,7 @@ Deno.test({
 Deno.test({
   name: "maybe::Matcher::map::pass_through_nil",
   fn: () => {
-    const num: Maybe<number> = null as Maybe<number>;
+    const num: Maybe<number> = null as unknown as number;
     const fn = (n: number): Maybe<string> => `${n}`;
 
     const mt: Matcher<string> = match(num).map(fn);
@@ -153,7 +140,7 @@ Deno.test({
 Deno.test({
   name: "maybe::Matcher::map::nil_dont_call_fn",
   fn: () => {
-    const num: Maybe<number> = null as Maybe<number>;
+    const num: Maybe<number> = null as unknown as number;
     let called: boolean = false;
     const fn = (n: number): Maybe<string> => {
       called = true;
@@ -177,7 +164,7 @@ Deno.test(
   {
     name: "maybe::Matcher::isOk::true_if_ok",
     fn: () => {
-      const mt = match("some" as Maybe<string>);
+      const mt = match("some");
 
       assert(mt.isOk());
     },
@@ -188,7 +175,7 @@ Deno.test(
   {
     name: "maybe::Matcher::isOk::false_if_nil",
     fn: () => {
-      const mt = match(null as Maybe<string>);
+      const mt = match(null);
 
       assert(!mt.isOk());
     },
@@ -199,7 +186,7 @@ Deno.test(
   {
     name: "maybe::Matcher::isNil::true_if_nil",
     fn: () => {
-      const mt = match(null as Maybe<string>);
+      const mt = match(null);
 
       assert(mt.isNil());
     },
@@ -210,7 +197,7 @@ Deno.test(
   {
     name: "maybe::Matcher::isNil::false_if_ok",
     fn: () => {
-      const mt = match("some" as Maybe<string>);
+      const mt = match("some");
 
       assert(!mt.isNil());
     },
@@ -220,7 +207,7 @@ Deno.test(
 Deno.test({
   name: "maybe::Matcher::nil::call_fn_if_nil",
   fn: () => {
-    const mt = match(null as Maybe<string>);
+    const mt = match(null);
     let called = false;
     const fn = () => called = true;
 
@@ -233,7 +220,7 @@ Deno.test({
 Deno.test({
   name: "maybe::Matcher::nil::dont_call_fn_if_ok",
   fn: () => {
-    const mt = match("some" as Maybe<string>);
+    const mt = match("some");
     let called = false;
     const fn = () => called = true;
 
@@ -246,7 +233,7 @@ Deno.test({
 Deno.test({
   name: "maybe::Matcher::ok::call_fn_if_ok",
   fn: () => {
-    const mt = match("some" as Maybe<string>);
+    const mt = match("some");
     let called: boolean = false;
     const fn = () => called = true;
 
@@ -259,7 +246,7 @@ Deno.test({
 Deno.test({
   name: "maybe::Matcher::ok::dont_call_chain_nil_if_ok",
   fn: () => {
-    const mt = match("some" as Maybe<string>);
+    const mt = match("some");
     let called: string = "none";
     const fn1 = () => called = "ok";
     const fn2 = () => called = "nil";
@@ -273,7 +260,7 @@ Deno.test({
 Deno.test({
   name: "maybe::Matcher::ok::dont_call_fn_if_nil",
   fn: () => {
-    const mt = match(null as Maybe<string>);
+    const mt = match(null);
     let called: boolean = false;
     const fn = () => called = true;
 

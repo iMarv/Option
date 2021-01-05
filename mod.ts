@@ -1,8 +1,6 @@
 const UNWRAP_ERROR_MSG: string = "Called unwrap on nil value";
 
 export type Maybe<T> = null | undefined | T;
-type NoMaybe<T> = Exclude<T, null | undefined>;
-type EnforceMaybe<T> = null | undefined extends T ? T : never;
 
 /**
  * Equivalent to nodes `isNullOrUndefined`, asserts whether
@@ -20,14 +18,12 @@ export function isNil(value: Maybe<unknown>): value is null | undefined {
  *
  * @param maybe Value that is possibly null or undefined
  */
-export function match<T extends Maybe<{}>>(
-  maybe: EnforceMaybe<T>,
-): Matcher<NoMaybe<T>> {
-  return new Matcher<NoMaybe<T>>(Object.freeze(maybe as Maybe<NoMaybe<T>>));
+export function match<T>(maybe: Maybe<T>): Matcher<T> {
+  return new Matcher(Object.freeze(maybe));
 }
 
 class NilMatcher<T> {
-  constructor(protected readonly _value: Readonly<Maybe<T>>) {}
+  constructor(protected readonly _value: Readonly<Maybe<T>>) { }
 
   /**
    * Checks if value of Matcher is Nil and runs given callback
@@ -73,23 +69,6 @@ export class Matcher<T> extends NilMatcher<T> {
   /**
    * Checks if Matcher value is not nil and applies given map
    * function to it.
-   * Map function has to return a matcher
-   *
-   * @param fn Function to use to map value
-   */
-  andThen<U extends NoMaybe<{}>>(
-    fn: (val: Readonly<T>) => Matcher<U>,
-  ): Matcher<U> {
-    if (isNil(this._value)) {
-      return new Matcher<U>(null);
-    }
-
-    return fn(this._value);
-  }
-
-  /**
-   * Checks if Matcher value is not nil and applies given map
-   * function to it.
    * Will return a matcher with nil-value and not apply map if
    * current value is nil
    *
@@ -97,15 +76,12 @@ export class Matcher<T> extends NilMatcher<T> {
    */
   map<U>(fn: (val: Readonly<T>) => Maybe<U>): Matcher<U> {
     if (isNil(this._value)) {
-      return new Matcher<U>(null);
+      return match<U>(null);
     }
 
-    return new Matcher<U>(fn(this._value));
+    return match<U>(fn(this._value));
   }
 
-  /**
-   * Returns value as Maybe
-   */
   asMaybe(): Maybe<Readonly<T>> {
     return this._value;
   }
