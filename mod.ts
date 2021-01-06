@@ -45,7 +45,7 @@ interface AllArgs<T, R> extends isSomeArg<T, R>, isNoneArg<R> {}
 export class Matcher<T> {
   constructor(protected _value: Readonly<Option<T>>) {}
 
-  if<R>(opts: AllArgs<T, R>): R;
+  if<R>(opts: AllArgs<T, R>): Some<R>;
   if<R>(opts: isNoneArg<R>): Option<R>;
   if<R>(opts: isSomeArg<T, R>): Option<R>;
   if<R>(opts: Partial<AllArgs<T, R>>): unknown {
@@ -121,7 +121,7 @@ export class Matcher<T> {
    *
    * @param defaultValue Value to return if Matcher value is nil
    */
-  unwrapOr(defaultValue: T): Readonly<T> {
+  unwrapOr(defaultValue: T): Some<Readonly<T>> {
     if (isNone(this._value)) {
       return Object.freeze(defaultValue);
     }
@@ -135,7 +135,7 @@ export class Matcher<T> {
    * This is not considered safe, you should consider using `.ok()` to work with
    * the value
    */
-  unwrap(): Readonly<T> | never {
+  unwrap(): Some<Readonly<T>> | never {
     if (isNone(this._value)) {
       throw new UnsafeOperationError(UNWRAP_ERROR_MSG);
     }
@@ -143,7 +143,7 @@ export class Matcher<T> {
     return this._value;
   }
 
-  expect(msg: string): Readonly<T> | never {
+  expect(msg: string): Some<Readonly<T>> | never {
     if (isNone(this._value)) {
       throw new UnsafeOperationError(msg);
     }

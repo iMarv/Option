@@ -1,14 +1,12 @@
-import { Matcher, Maybe, match } from "../mod.ts";
-import {
-  assert,
-} from "https://deno.land/std@0.53.0/testing/asserts.ts";
+import { match, Matcher, Option } from "../mod.ts";
+import { assert } from "https://deno.land/std@0.83.0/testing/asserts.ts";
 
 // Run this example yourself with `deno run --allow-net examples/fetch-wrapper.ts
 
 async function saveFetch(url: string): Promise<Matcher<string>> {
-  const response: Maybe<string> = await fetch(url).then(
+  const response: Option<string> = await fetch(url).then(
     (res) => res.text(),
-    // Catch any error and map it to a nil value
+    // Catch any error and map it to a none value
   ).catch(() => null);
 
   // Return a matcher
@@ -17,26 +15,28 @@ async function saveFetch(url: string): Promise<Matcher<string>> {
 
 const ok: Matcher<string> = await saveFetch("https://example.com");
 // We got a value
-assert(ok.isOk());
+assert(ok.isSome());
 
 // We can map the value to our liking
-ok.map((s) => s.length).ok((val) => {
-  console.log("Page size:", val);
-  assert(val > 0);
+ok.map((s) => s.length).if({
+  some: (val) => {
+    console.log("Page size:", val);
+    assert(val > 0);
+  },
 });
 
 // We can also get a mapped value back as a Maybe
-console.log("Page Size:", ok.map((s) => s.length).asMaybe());
+console.log("Page Size:", ok.map((s) => s.length).toOption());
 
 // Null values need to be handled manually now though
-console.log("Page Size:", ok.map(() => null).asMaybe());
+console.log("Page Size:", ok.map(() => null).toOption());
 
 // Errors do not crash our program but can be handled properly
 const notOk: Matcher<string> = await saveFetch("https://example.cpm");
-assert(notOk.isNil());
+assert(notOk.isNone());
 
 // Safe access to the value is not very comfortable in an if block:
-if (notOk.isOk()) {
+if (notOk.isSome()) {
   // Would prefer not to unwrap, because here we should be able to know
   // that the value is not nil.
   console.log(notOk.unwrap());
@@ -48,11 +48,23 @@ if (notOk.isOk()) {
 
 // You can use .ok() and .nil() as an easy to access alternative:
 
-notOk.ok((val) => {
-  // Value is already unwrapped for us
-  console.log(val);
-  assert(false);
-}).nil(() => {
-  console.log("I run if the value is not ok 2");
-  assert(true);
+notOk.if({
+  some: (val) => {
+    // Value is already unwrapped for us
+    console.log(val);
+    assert(false);
+  },
+  none: () => {
+    console.log("I run if the value is not ok 2");
+    assert(true);
+  },
 });
+
+// Keeping the matcher inline instead of using Option<T> works aswell
+interface UserInfo {
+  name: string;
+  nickname: Matcher<string>;
+}
+
+const user: UserInfo = { name: "John", nickname: match<string>(null) };
+console.log("What we send to api:", JSON.stringify(user));
