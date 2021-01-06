@@ -1,6 +1,8 @@
 const UNWRAP_ERROR_MSG: string = "Called unwrap on nil value";
 
-export type Maybe<T> = null | undefined | T;
+export type Some<T> = T;
+export type None = null | undefined;
+export type Option<T> = Some<T> | None;
 
 export class UnsafeOperationError extends Error {
   name: string = "UnsafeOperationError";
@@ -16,7 +18,7 @@ export class UnsafeOperationError extends Error {
  *
  * @param value Value that is possibly null or undefined
  */
-export function isNil(value: Maybe<unknown>): value is null | undefined {
+export function isNone(value: Option<unknown>): value is None {
   return value === null || value === undefined;
 }
 
@@ -26,52 +28,53 @@ export function isNil(value: Maybe<unknown>): value is null | undefined {
  *
  * @param maybe Value that is possibly null or undefined
  */
-export function match<T>(maybe: Maybe<T>): Matcher<T> {
+export function match<T>(maybe: Option<T>): Matcher<T> {
   return new Matcher(Object.freeze(maybe));
 }
 
-class NilMatcher<T> {
-  constructor(protected _value: Readonly<Maybe<T>>) {}
-
-  /**
-   * Checks if value of Matcher is Nil and runs given callback
-   * if it is.
-   *
-   * @param fn Callback to run if Matcher value is nil
-   */
-  nil(fn: () => void): void {
-    if (isNil(this._value)) {
-      fn();
-    }
-  }
+interface isSomeArg<T, R> {
+  some: (val: T) => R;
 }
 
-export class Matcher<T> extends NilMatcher<T> {
-  /**
-   * Checks if value of Matcher is Nil and rusn given callback
-   * if it is not nil
-   * @param fn Callback to run if Matcher value is not nil
-   */
-  ok(fn: (val: Readonly<T>) => void): NilMatcher<T> {
-    if (!isNil(this._value)) {
-      fn(this._value);
+interface isNoneArg<R> {
+  none: () => R;
+}
+
+interface AllArgs<T, R> extends isSomeArg<T, R>, isNoneArg<R> {}
+
+export class Matcher<T> {
+  constructor(protected _value: Readonly<Option<T>>) {}
+
+  if<R>(opts: AllArgs<T, R>): R;
+  if<R>(opts: isNoneArg<R>): Option<R>;
+  if<R>(opts: isSomeArg<T, R>): Option<R>;
+  if<R>(opts: Partial<AllArgs<T, R>>): unknown {
+    const hasSomeArg = !isNone(opts.some);
+    const hasNoneArg = !isNone(opts.none);
+
+    if (!isNone(this._value) && hasSomeArg) {
+      return opts.some!(this._value);
+    } else if (isNone(this._value) && hasNoneArg) {
+      return opts.none!();
+    } else if (!hasSomeArg && !hasNoneArg) {
+      throw new UnsafeOperationError("Did not provide any handlers for `if`");
     }
 
-    return new NilMatcher(this._value);
+    return null;
   }
 
   /**
    * Returns true if Matcher value is not nil
    */
-  isOk(): boolean {
-    return !isNil(this._value);
+  isSome(): boolean {
+    return !isNone(this._value);
   }
 
   /**
    * Returns true if Matcher value is nil
    */
-  isNil(): boolean {
-    return isNil(this._value);
+  isNone(): boolean {
+    return isNone(this._value);
   }
 
   /**
@@ -80,8 +83,8 @@ export class Matcher<T> extends NilMatcher<T> {
    *
    * @param fallback Fallback value if inner value is nil
    */
-  or<R>(fallback: Maybe<R>): Matcher<R> {
-    if (isNil(this._value)) {
+  or<R>(fallback: Option<R>): Matcher<R> {
+    if (isNone(this._value)) {
       return new Matcher(fallback);
     } else {
       return new Matcher(this._value as unknown as R);
@@ -96,24 +99,20 @@ export class Matcher<T> extends NilMatcher<T> {
    *
    * @param fn Function to use to map value
    */
-  map<R>(fn: (val: Readonly<T>) => Maybe<R>): Matcher<R> {
-    if (isNil(this._value)) {
+  map<R>(fn: (val: Readonly<T>) => Option<R>): Matcher<R> {
+    if (isNone(this._value)) {
       return match<R>(null);
     }
 
     return match<R>(fn(this._value));
   }
 
-  mapOr<R>(mapFn: (value: T) => Maybe<R>, fallback: R): Matcher<R> {
+  mapOr<R>(mapFn: (value: T) => Option<R>, fallback: R): Matcher<R> {
     return this.map(mapFn).or(fallback);
   }
 
   is(comparand: T): boolean {
     return comparand === this._value;
-  }
-
-  asMaybe(): Maybe<Readonly<T>> {
-    return this._value;
   }
 
   /**
@@ -123,7 +122,7 @@ export class Matcher<T> extends NilMatcher<T> {
    * @param defaultValue Value to return if Matcher value is nil
    */
   unwrapOr(defaultValue: T): Readonly<T> {
-    if (isNil(this._value)) {
+    if (isNone(this._value)) {
       return Object.freeze(defaultValue);
     }
 
@@ -137,7 +136,7 @@ export class Matcher<T> extends NilMatcher<T> {
    * the value
    */
   unwrap(): Readonly<T> | never {
-    if (isNil(this._value)) {
+    if (isNone(this._value)) {
       throw new UnsafeOperationError(UNWRAP_ERROR_MSG);
     }
 
@@ -145,22 +144,26 @@ export class Matcher<T> extends NilMatcher<T> {
   }
 
   expect(msg: string): Readonly<T> | never {
-    if (isNil(this._value)) {
+    if (isNone(this._value)) {
       throw new UnsafeOperationError(msg);
     }
 
     return this._value;
   }
 
+  toOption(): Option<T> {
+    return this._value;
+  }
+
   toPromise(): Promise<T> {
-    if (isNil(this._value)) {
+    if (isNone(this._value)) {
       return Promise.reject(UNWRAP_ERROR_MSG);
     }
     return Promise.resolve(this._value);
   }
 
   toJSON() {
-    return this.asMaybe();
+    return this.toOption();
   }
 
   toString() {
