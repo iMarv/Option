@@ -29,7 +29,7 @@ export function isNone(value: Option<unknown>): value is None {
  * @param maybe Value that is possibly null or undefined
  */
 export function match<T>(maybe: Option<T>): Matcher<T> {
-  return new Matcher(Object.freeze(maybe));
+  return new Matcher(maybe);
 }
 
 interface isSomeArg<T, R> {
@@ -123,7 +123,7 @@ export class Matcher<T> {
    */
   unwrapOr(defaultValue: T): Some<Readonly<T>> {
     if (isNone(this._value)) {
-      return Object.freeze(defaultValue);
+      return defaultValue;
     }
 
     return this._value;

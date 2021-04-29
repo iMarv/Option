@@ -25,14 +25,6 @@ Rhum.testPlan("option", () => {
     });
   });
 
-  Rhum.testSuite("match", () => {
-    Rhum.testCase("should freeze value", () => {
-      const val = match("testi");
-
-      Rhum.asserts.assert(Object.isFrozen(val.unwrap()));
-    });
-  });
-
   Rhum.testSuite("toOption", () => {
     Rhum.testCase("should return value", () => {
       const original: Option<string> = "testi";
