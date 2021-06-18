@@ -1,7 +1,7 @@
 import { isNone, match, Matcher, Option } from "./mod.ts";
 import { Rhum } from "https://deno.land/x/rhum@v1.1.6/mod.ts";
 
-const UNWRAP_ERROR_MSG: string = "Called unwrap on nil value";
+const UNWRAP_ERROR_MSG = "Called unwrap on nil value";
 
 Rhum.testPlan("option", () => {
   Rhum.testSuite("isNone", () => {
@@ -68,7 +68,7 @@ Rhum.testPlan("option", () => {
       Rhum.asserts.assertEquals(value.unwrapOr("testo"), original);
     });
     Rhum.testCase("should return default if value is none", () => {
-      const expected: string = "testo";
+      const expected = "testo";
       const value: Matcher<string> = match(null as unknown as string);
 
       Rhum.asserts.assertEquals(value.unwrapOr(expected), expected);
@@ -99,7 +99,7 @@ Rhum.testPlan("option", () => {
     });
     Rhum.testCase("should not call map function if value is none", () => {
       const num: Option<number> = null as unknown as number;
-      let called: boolean = false;
+      let called = false;
       const fn = (n: number): Option<string> => {
         called = true;
         return `${n}`;
@@ -238,7 +238,7 @@ Rhum.testPlan("option", () => {
     );
     Rhum.testCase("should throw if no handlers are provided", () => {
       Rhum.asserts.assertThrows(() => {
-        // @ts-expect-error
+        // @ts-expect-error: Mocking for testing
         match(null).if({});
       });
     });

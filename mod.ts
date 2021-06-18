@@ -1,11 +1,11 @@
-const UNWRAP_ERROR_MSG: string = "Called unwrap on nil value";
+const UNWRAP_ERROR_MSG = "Called unwrap on nil value";
 
 export type Some<T> = T;
 export type None = null | undefined;
 export type Option<T> = Some<T> | None;
 
 export class UnsafeOperationError extends Error {
-  name: string = "UnsafeOperationError";
+  name = "UnsafeOperationError";
 
   constructor(msg: string) {
     super(msg);
@@ -17,6 +17,14 @@ export class UnsafeOperationError extends Error {
  * given value is `null | undefined` or not
  *
  * @param value Value that is possibly null or undefined
+ *
+ * @example
+ * ```
+ * import { isNone } from './mod.ts';
+ *
+ * const a = isNone(null); // true
+ * const b = isNone(0); //false
+ * ```
  */
 export function isNone(value: Option<unknown>): value is None {
   return value === null || value === undefined;
@@ -27,6 +35,13 @@ export function isNone(value: Option<unknown>): value is None {
  * maps to it
  *
  * @param maybe Value that is possibly null or undefined
+ *
+ * @example
+ * ```
+ * import { match } from './mod.ts';
+ *
+ * const m = match(0);
+ * ```
  */
 export function match<T>(maybe: Option<T>): Matcher<T> {
   return new Matcher(maybe);
@@ -45,6 +60,27 @@ interface AllArgs<T, R> extends isSomeArg<T, R>, isNoneArg<R> {}
 export class Matcher<T> {
   constructor(protected _value: Readonly<Option<T>>) {}
 
+  /**
+   * Allows to resolve inner value with given callbacks
+   *
+   * @param opts Options to resolve value
+   *
+   * @example
+   * ```
+   * import { match, Option } from './mod.ts';
+   *
+   * const n: Option<number> = null as Option<number>;
+   *
+   * const m1: Option<number> = match(0).if({ some: a => a + 2 }); // 2
+   * const m2: Option<number> = match(0).if({ none: () => 2 }); // null
+   *
+   * const m3: Option<number> = match(n).if({ some: a => a + 2 }); // null
+   * const m4: Option<number> = match(n).if({ none: () => 2 }); // 2
+   *
+   * const m5: number = match(0).if({ some: a => a + 2, none: () => 5 }); // 2
+   * const m6: number = match(n).if({ some: a => a + 2, none: () => 5 }); // 5
+   * ```
+   */
   if<R>(opts: AllArgs<T, R>): Some<R>;
   if<R>(opts: isNoneArg<R>): Option<R>;
   if<R>(opts: isSomeArg<T, R>): Option<R>;
@@ -65,6 +101,14 @@ export class Matcher<T> {
 
   /**
    * Returns true if Matcher value is not nil
+   *
+   * @example
+   * ```
+   * import { match } from './mod.ts';
+   *
+   * const m1 = match(0).isSome(); // true
+   * const m2 = match(null).isSome(); // false
+   * ```
    */
   isSome(): boolean {
     return !isNone(this._value);
@@ -72,6 +116,14 @@ export class Matcher<T> {
 
   /**
    * Returns true if Matcher value is nil
+   *
+   * @example
+   * ```
+   * import { match } from './mod.ts';
+   *
+   * const m1 = match(0).isNone(); // true
+   * const m2 = match(null).isNone(); // false
+   * ```
    */
   isNone(): boolean {
     return isNone(this._value);
