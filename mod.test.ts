@@ -1,275 +1,230 @@
 import { isNone, match, Matcher, Option } from "./mod.ts";
-import { Rhum } from "https://deno.land/x/rhum@v1.1.6/mod.ts";
+import {
+  assert,
+  assertEquals,
+  assertThrows,
+} from "https://deno.land/std@0.147.0/testing/asserts.ts";
 
 const UNWRAP_ERROR_MSG = "Called unwrap on nil value";
 
-Rhum.testPlan("option", () => {
-  Rhum.testSuite("isNone", () => {
-    Rhum.testCase("should be true for null", () => {
-      Rhum.asserts.assert(isNone(null));
-    });
-    Rhum.testCase("should be true for undefined", () => {
-      Rhum.asserts.assert(isNone(undefined));
-    });
-    Rhum.testCase("should be false for string", () => {
-      Rhum.asserts.assert(!isNone("testi"));
-    });
-    Rhum.testCase("should be false for number", () => {
-      Rhum.asserts.assert(!isNone(2));
-    });
-    Rhum.testCase("should be false for object", () => {
-      Rhum.asserts.assert(!isNone({}));
-    });
-    Rhum.testCase("should be false for array", () => {
-      Rhum.asserts.assert(!isNone([]));
-    });
-  });
+Deno.test("isNone :: returns true for null and undefined", () => {
+  const a = isNone(null);
+  const b = isNone(undefined);
 
-  Rhum.testSuite("toOption", () => {
-    Rhum.testCase("should return value", () => {
-      const original: Option<string> = "testi";
-      const value: Matcher<string> = match(original);
+  assert(a);
+  assert(b);
+});
 
-      Rhum.asserts.assertEquals(value.toOption(), original);
-    });
+Deno.test("isNone :: returns false for 'empty' values", () => {
+  const a = isNone("");
+  const b = isNone(0);
+  const c = isNone([]);
+  const d = isNone({});
 
-    Rhum.testCase("should return mapped value", () => {
-      const original: Option<string> = "testi";
-      const value: Matcher<string> = match(original).map((val) => `${val}2`);
+  assert(!a);
+  assert(!b);
+  assert(!c);
+  assert(!d);
+});
 
-      Rhum.asserts.assertEquals(value.toOption(), "testi2");
-    });
-  });
+Deno.test("Matcher.toOption :: returns value inside matcher", () => {
+  const original: Option<string> = "testi";
+  const value: Matcher<string> = match(original);
 
-  Rhum.testSuite("unwrap", () => {
-    Rhum.testCase("should return value if it is some", () => {
-      const original: Option<string> = "testi";
-      const value: Matcher<string> = match(original);
+  assertEquals(value.toOption(), original);
+});
 
-      Rhum.asserts.assertEquals(value.unwrap(), original);
-    });
-    Rhum.testCase("should throw if value is none", () => {
-      const value: Matcher<string> = match(null as unknown as string);
+Deno.test("Matcher.unwrap() :: returns value if it is some", () => {
+  const original: Option<string> = "testi";
+  const value: Matcher<string> = match(original);
 
-      Rhum.asserts.assertThrows(
-        () => {
-          value.unwrap();
-        },
-        Error,
-        UNWRAP_ERROR_MSG,
-      );
-    });
-  });
-  Rhum.testSuite("unwrapOr", () => {
-    Rhum.testCase("should return value if it is some", () => {
-      const original: Option<string> = "testi";
-      const value: Matcher<string> = match(original);
+  assertEquals(value.unwrap(), original);
+});
 
-      Rhum.asserts.assertEquals(value.unwrapOr("testo"), original);
-    });
-    Rhum.testCase("should return default if value is none", () => {
-      const expected = "testo";
-      const value: Matcher<string> = match(null as unknown as string);
+Deno.test("Matcher.unwrap() :: throws if value is none", () => {
+  const value: Matcher<string> = match(null as unknown as string);
 
-      Rhum.asserts.assertEquals(value.unwrapOr(expected), expected);
-    });
-  });
-  Rhum.testSuite("map", () => {
-    Rhum.testCase("should call given function on value", () => {
-      const num: Option<number> = 1;
-      const fn = (n: number): Option<string> => `${n}`;
+  assertThrows(
+    () => {
+      value.unwrap();
+    },
+    Error,
+    UNWRAP_ERROR_MSG,
+  );
+});
 
-      const mt: Matcher<string> = match(num).map(fn);
+Deno.test("Matcher.unwrapOr() :: returns value if it is some", () => {
+  const original: Option<string> = "testi";
+  const value: Matcher<string> = match(original);
 
-      Rhum.asserts.assertEquals(mt.unwrap(), "1");
-    });
-    Rhum.testCase("should pass value through unchanged if none", () => {
-      const num: Option<number> = null as unknown as number;
-      const fn = (n: number): Option<string> => `${n}`;
+  assertEquals(value.unwrapOr("testo"), original);
+});
 
-      const mt: Matcher<string> = match(num).map(fn);
+Deno.test("Matcher.unwrapOr() :: returns default value if value is none", () => {
+  const expected = "testo";
+  const value: Matcher<string> = match(null as unknown as string);
 
-      Rhum.asserts.assertThrows(
-        () => {
-          mt.unwrap();
-        },
-        Error,
-        UNWRAP_ERROR_MSG,
-      );
-    });
-    Rhum.testCase("should not call map function if value is none", () => {
-      const num: Option<number> = null as unknown as number;
-      let called = false;
-      const fn = (n: number): Option<string> => {
-        called = true;
-        return `${n}`;
-      };
+  assertEquals(value.unwrapOr(expected), expected);
+});
 
-      const mt: Matcher<string> = match(num).map(fn);
+Deno.test("Matcher.map() :: calls given function on value", () => {
+  const num: Option<number> = 1;
+  const fn = (n: number): Option<string> => `${n}`;
 
-      Rhum.asserts.assertThrows(
-        () => {
-          mt.unwrap();
-        },
-        Error,
-        UNWRAP_ERROR_MSG,
-      );
-      Rhum.asserts.assert(!called);
-    });
-  });
-  Rhum.testSuite("isSome", () => {
-    Rhum.testCase("should return true if value is some", () => {
-      const mt = match("some");
+  const mt: Matcher<string> = match(num).map(fn);
 
-      Rhum.asserts.assert(mt.isSome());
-    });
+  assertEquals(mt.unwrap(), "1");
+});
 
-    Rhum.testCase("should return false if value is none", () => {
-      const mt = match(null);
+Deno.test("Matcher.map() :: does not call map function if value is none", () => {
+  const num: Option<number> = null as unknown as number;
+  let called = false;
+  const fn = (n: number): Option<string> => {
+    called = true;
+    return `${n}`;
+  };
 
-      Rhum.asserts.assert(!mt.isSome());
-    });
-  });
-  Rhum.testSuite("isNone", () => {
-    Rhum.testCase("should return true if value is none", () => {
-      const mt = match(null);
+  const mt: Matcher<string> = match(num).map(fn);
 
-      Rhum.asserts.assert(mt.isNone());
-    });
-    Rhum.testCase("should return false if value is some", () => {
-      const mt = match("some");
+  assertThrows(
+    () => {
+      mt.unwrap();
+    },
+    Error,
+    UNWRAP_ERROR_MSG,
+  );
+  assert(!called);
+});
 
-      Rhum.asserts.assert(!mt.isNone());
-    });
-  });
-  Rhum.testSuite("or", () => {
-    Rhum.testCase("should not change value if some", () => {
-      const original = "testi";
-      const mt = match(original).or("testo");
+Deno.test("Matcher.isSome() :: returns true if value is some", () => {
+  const mt = match("some");
 
-      Rhum.asserts.assertEquals(mt.unwrap(), original);
-    });
-    Rhum.testCase("should update value if none", () => {
-      const original = null;
-      const mt = match(original).or("testo");
+  assert(mt.isSome());
+});
 
-      Rhum.asserts.assertEquals(mt.unwrap(), "testo");
-    });
-  });
-  Rhum.testSuite("mapOr", () => {
-    Rhum.testCase("should not change value if map returns some", () => {
-      const original = "testi";
-      const mt = match(original).mapOr((o) => o, "testo");
+Deno.test("Matcher.isSome() :: returns false if value is none", () => {
+  const mt = match(null);
 
-      Rhum.asserts.assertEquals(mt.unwrap(), original);
-    });
-    Rhum.testCase("should update value if map returns none", () => {
-      const original = "testi";
-      const mt = match(original).mapOr((_) => null, "testo");
+  assert(!mt.isSome());
+});
 
-      Rhum.asserts.assertEquals(mt.unwrap(), "testo");
-    });
-  });
-  Rhum.testSuite("toString", () => {
-    Rhum.testCase("should return `null` string if none", () => {
-      const res = match(undefined).toString();
-      Rhum.asserts.assertEquals(res, "null");
-    });
-    Rhum.testCase(
-      "should return return string representation if value is some",
-      () => {
-        const res = match({ a: 1 }).toString();
-        Rhum.asserts.assertEquals(res, { a: 1 }.toString());
-      },
-    );
-  });
-  Rhum.testSuite("toJSON", () => {
-    Rhum.testCase("should pull out inner value when converting to JSON", () => {
-      const actual = JSON.stringify({ a: match(2) });
-      const expected = JSON.stringify({ a: 2 });
+Deno.test("Matcher.isNone() :: returns true if value is none", () => {
+  const mt = match(null);
 
-      Rhum.asserts.assertEquals(actual, expected);
-    });
-    Rhum.testCase("should pull out none value when converting to JSON", () => {
-      const actual = JSON.stringify({ a: match(null) });
-      const expected = JSON.stringify({ a: null });
+  assert(mt.isNone());
+});
 
-      Rhum.asserts.assertEquals(actual, expected);
-    });
-  });
-  Rhum.testSuite("toPromise", () => {
-    Rhum.testCase("should resolve if value is some", async () => {
-      const val = await match(2).toPromise();
+Deno.test("Matcher.isNone() :: returns false if value is some", () => {
+  const mt = match("some");
 
-      Rhum.asserts.assertEquals(val, 2);
-    });
-    Rhum.testCase("should reject if value is none", async () => {
-      const val = await match(null).toPromise().catch((_) => 3);
+  assert(!mt.isNone());
+});
 
-      Rhum.asserts.assertEquals(val, 3);
-    });
-  });
-  Rhum.testSuite("if", () => {
-    Rhum.testCase("should call some callback if value is some", () => {
-      const val = match("testi").if(
-        { some: (v) => `${v}1`, none: () => "testi2" },
-      );
-      Rhum.asserts.assertEquals(val, "testi1");
-    });
-    Rhum.testCase(
-      "should return null if value is some but no callback is provided",
-      () => {
-        const val = match("testi").if({ none: () => "testi1" });
-        Rhum.asserts.assertEquals(val, null);
-      },
-    );
-    Rhum.testCase("should call none callback if value is none", () => {
-      const val = match(null).if(
-        { some: (_) => "testi2", none: () => "testi1" },
-      );
-      Rhum.asserts.assertEquals(val, "testi1");
-    });
-    Rhum.testCase(
-      "should return null if value is none but no callback is provided",
-      () => {
-        const val = match(undefined).if({ some: (_) => "testi1" });
-        Rhum.asserts.assertEquals(val, null);
-      },
-    );
-    Rhum.testCase("should throw if no handlers are provided", () => {
-      Rhum.asserts.assertThrows(() => {
-        // @ts-expect-error: Mocking for testing
-        match(null).if({});
-      });
-    });
-  });
-  Rhum.testSuite("is", () => {
-    Rhum.testCase("should return true if value equals comparand", () => {
-      Rhum.asserts.assert(match(2).is(2));
-    });
-    Rhum.testCase(
-      "should return false if value does not equal comparand",
-      () => {
-        Rhum.asserts.assert(!match(2).is(3));
-      },
-    );
-    Rhum.testCase("should return false if value is none", () => {
-      Rhum.asserts.assert(!match<number>(null).is(3));
-    });
-  });
-  Rhum.testSuite("expect", () => {
-    Rhum.testCase("should return value if some", () => {
-      const actual = match(2).expect("This is fine");
-      const expected = 2;
+Deno.test("Matcher.or() :: does not change value if it is some", () => {
+  const original = "testi";
+  const mt = match(original).or("testo");
 
-      Rhum.asserts.assertEquals(actual, expected);
-    });
-    Rhum.testCase("should throw if value is none", () => {
-      Rhum.asserts.assertThrows(() => {
-        match(null).expect("This is fine");
-      });
-    });
+  assertEquals(mt.unwrap(), original);
+});
+
+Deno.test("Matcher.or() :: returns fallback value if value is none", () => {
+  const original = null;
+  const mt = match(original).or("testo");
+
+  assertEquals(mt.unwrap(), "testo");
+});
+
+Deno.test("Matcher.mapOr() :: returns value if it is some", () => {
+  const original = "testi";
+  const mt = match(original).mapOr((o) => o, "testo");
+
+  assertEquals(mt.unwrap(), original);
+})
+
+Deno.test("Matcher.mapOr() :: updates value if map returns none", () => {
+  const original = "testi";
+  const mt = match(original).mapOr((_) => null, "testo");
+
+  assertEquals(mt.unwrap(), "testo");
+})
+
+Deno.test("Matcher.toString() :: returns `null` string if none", () => {
+  const res = match(undefined).toString();
+  assertEquals(res, "null");
+})
+
+Deno.test("Matcher.toString() :: returns string representation of value if it is some", () => {
+  const res = match({ a: 1 }).toString();
+  assertEquals(res, { a: 1 }.toString());
+})
+
+Deno.test("Matcher.toJSON() :: pulls out inner value when converting to JSON", () => {
+  const actual = JSON.stringify({ a: match(2) });
+  const expected = JSON.stringify({ a: 2 });
+
+  assertEquals(actual, expected);
+})
+
+Deno.test("Matcher.toJSON() :: pulls out none value when converting to JSON", () => {
+  const actual = JSON.stringify({ a: match(null) });
+  const expected = JSON.stringify({ a: null });
+
+  assertEquals(actual, expected);
+})
+
+Deno.test("Matcher.if() :: calls some-callback if value is some", () => {
+
+  const val = match("testi").if(
+      { some: (v) => `${v}1`, none: () => "testi2" },
+  );
+  assertEquals(val, "testi1");
+})
+
+Deno.test("Matcher.if() :: returns null if value is some but no callback is provided", () => {
+  const val = match("testi").if({ none: () => "testi1" });
+  assertEquals(val, null);
+})
+
+Deno.test("Matcher.if() :: calls none-callback if value is none", () => {
+  const val = match(null).if(
+      { some: (_) => "testi2", none: () => "testi1" },
+  );
+  assertEquals(val, "testi1");
+})
+
+Deno.test("Matcher.if() :: returns null if value is none but no callback is provided", () => {
+  const val = match(undefined).if({ some: (_) => "testi1" });
+  assertEquals(val, null);
+})
+
+Deno.test("Matcher.if() :: throws if no handlers are provided", () => {
+  assertThrows(() => {
+    // @ts-expect-error: Mocking for testing
+    match(null).if({});
   });
 });
 
-Rhum.run();
+Deno.test("Matcher.is() :: returns true if value is equal to given value", () => {
+  assert(match(2).is(2));
+})
+
+Deno.test("Matcher.is() :: returns false if value is not equal to given value", () => {
+  assert(!match(2).is(3));
+})
+
+Deno.test("Matcher.is() :: returns false if value is none", () => {
+  assert(!match<number>(null).is(3));
+})
+
+Deno.test("Matcher.expect() :: returns value if some", () => {
+  const actual = match(2).expect("This is fine");
+  const expected = 2;
+
+  assertEquals(actual, expected);
+})
+
+Deno.test("Matcher.expect() :: throws if none", () => {
+  assertThrows(() => {
+    match(null).expect("This is fine");
+  });
+})
