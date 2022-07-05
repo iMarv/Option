@@ -3,6 +3,7 @@ const UNWRAP_ERROR_MSG = "Called unwrap on nil value";
 export type Some<T> = T;
 export type None = null | undefined;
 export type Option<T> = Some<T> | None;
+export type PromiseOption<T> = Promise<Option<T>>;
 
 export class UnsafeOperationError extends Error {
   name = "UnsafeOperationError";
@@ -45,6 +46,12 @@ export function isNone(value: Option<unknown>): value is None {
  */
 export function match<T>(maybe: Option<T>): Matcher<T> {
   return new Matcher(maybe);
+}
+
+export function matchPromise<T>(
+  maybe: PromiseOption<T> | Option<T>,
+): PromiseMatcher<T> {
+  return new PromiseMatcher<T>(maybe);
 }
 
 interface isSomeArg<T, R> {
@@ -151,7 +158,7 @@ export class Matcher<T> {
    *
    * @param fn Function to use to map value
    */
-  map<R>(fn: (val: Readonly<T>) => Option<R>): Matcher<R> {
+  map<R>(fn: (val: T) => Option<R>): Matcher<R> {
     if (isNone(this._value)) {
       return match<R>(null);
     }
@@ -207,18 +214,41 @@ export class Matcher<T> {
     return this._value;
   }
 
-  toPromise(): Promise<T> {
-    if (isNone(this._value)) {
-      return Promise.reject(UNWRAP_ERROR_MSG);
-    }
-    return Promise.resolve(this._value);
-  }
-
   toJSON() {
     return this.toOption();
   }
 
   toString() {
     return (this._value ?? "null").toString();
+  }
+}
+
+function isPromise<T>(val: unknown | Promise<T>): val is Promise<T> {
+  return val instanceof Promise;
+}
+
+class PromiseMatcher<T> {
+  protected _value: PromiseOption<T>;
+
+  constructor(value: PromiseOption<T> | Option<T>) {
+    if (isPromise(value)) {
+      this._value = value;
+    } else {
+      this._value = Promise.resolve(value);
+    }
+  }
+
+  map<R>(fn: (val: T) => PromiseOption<R> | Option<R>): PromiseMatcher<R> {
+    return matchPromise(this._value.then((val: Option<T>) => {
+      if (isNone(val)) {
+        return null;
+      }
+
+      return fn(val);
+    }));
+  }
+
+  extract(): PromiseOption<T> {
+    return this._value;
   }
 }
