@@ -1,10 +1,11 @@
 import { Option, UNWRAP_ERROR_MSG } from "./util.ts";
-import { match, Matcher } from "./matcher.ts";
+import { Matcher } from "./matcher.ts";
 import {
   assert,
   assertEquals,
   assertThrows,
 } from "https://deno.land/std@0.147.0/testing/asserts.ts";
+import { match } from "./match.ts";
 
 Deno.test("Matcher.toOption :: returns value inside matcher", () => {
   const original: Option<string> = "testi";

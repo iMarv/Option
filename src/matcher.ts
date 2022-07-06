@@ -6,7 +6,7 @@
  *
  * @example
  * ```
- * import { match } from './mod.ts';
+ * import { match } from './match.ts';
  *
  * const m = match(0);
  * ```
@@ -21,10 +21,7 @@ import {
   UnsafeOperationError,
   UNWRAP_ERROR_MSG,
 } from "./util.ts";
-
-export function match<T>(maybe: Option<T>): Matcher<T> {
-  return new Matcher(maybe);
-}
+import { match } from "./match.ts";
 
 export class Matcher<T> {
   constructor(protected _value: Readonly<Option<T>>) {}
@@ -36,7 +33,8 @@ export class Matcher<T> {
    *
    * @example
    * ```
-   * import { match, Option } from './mod.ts';
+   * import { match } from './match.ts';
+   * import { Option } from './util.ts';
    *
    * const n: Option<number> = null as Option<number>;
    *
@@ -73,7 +71,7 @@ export class Matcher<T> {
    *
    * @example
    * ```
-   * import { match } from './mod.ts';
+   * import { match } from './match.ts';
    *
    * const m1 = match(0).isSome(); // true
    * const m2 = match(null).isSome(); // false
@@ -88,7 +86,7 @@ export class Matcher<T> {
    *
    * @example
    * ```
-   * import { match } from './mod.ts';
+   * import { match } from './match.ts';
    *
    * const m1 = match(0).isNone(); // true
    * const m2 = match(null).isNone(); // false

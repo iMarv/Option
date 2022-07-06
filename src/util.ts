@@ -31,10 +31,10 @@ export class UnsafeOperationError extends Error {
  *
  * @example
  * ```
- * import { isNone } from './mod.ts';
+ * import { isNone } from './util.ts';
  *
  * const a = isNone(null); // true
- * const b = isNone(0); //false
+ * const b = isNone(0); // false
  * ```
  */
 export function isNone(value: Option<unknown>): value is None {

@@ -8,19 +8,13 @@ import {
   UnsafeOperationError,
   UNWRAP_ERROR_MSG,
 } from "./util.ts";
-import { match } from "./matcher.ts";
+import { match, matchPromise } from "./match.ts";
 
 function isPromise<T>(val: unknown | Promise<T>): val is Promise<T> {
   return val instanceof Promise;
 }
 
-export function matchPromise<T>(
-  maybe: PromiseOption<T> | Option<T>,
-): PromiseMatcher<T> {
-  return new PromiseMatcher<T>(maybe);
-}
-
-class PromiseMatcher<T> {
+export class PromiseMatcher<T> {
   protected _value: PromiseOption<T>;
 
   constructor(value: PromiseOption<T> | Option<T>) {
@@ -74,6 +68,27 @@ class PromiseMatcher<T> {
   if<R>(opts: Partial<AllArgs<T, R>>): unknown {
     // @ts-expect-error: Hard to type
     return this._value.then(match).then((m) => m.if(opts));
+  }
+
+  /**
+   * Maps a rejected promise to a none value in a resolved promise.
+   * Allows logging the error (or similar) with a given fn
+   * @param sideEffect
+   */
+  clearReject(
+    sideEffect?: (error: unknown) => void | Promise<void>,
+  ): PromiseMatcher<T> {
+    return matchPromise(this._value.catch((err) => {
+      if (sideEffect) {
+        const sResult = sideEffect(err);
+
+        if (isPromise(sResult)) {
+          return sResult.then(() => null);
+        }
+      }
+
+      return null;
+    }));
   }
 
   toPromise(): PromiseOption<T> {

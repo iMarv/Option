@@ -1,10 +1,10 @@
-import { matchPromise } from "./promise-matcher.ts";
 import {
   assert,
   assertEquals,
   assertRejects,
 } from "https://deno.land/std@0.147.0/testing/asserts.ts";
 import { Option, UNWRAP_ERROR_MSG } from "./util.ts";
+import { matchPromise } from "./match.ts";
 
 Deno.test("PromiseMatcher.map() :: maps value if it is some", async () => {
   const a = await matchPromise(2).map((v) => v + 1).toPromise();
@@ -127,4 +127,49 @@ Deno.test("PromiseMatcher.if() :: throws if no handlers are provided", async () 
     // @ts-expect-error: Mocking for testing
     return matchPromise(null).if({});
   });
+});
+
+Deno.test("PromiseMatcher.clearReject() :: keeps value in promise if it is some", async () => {
+  const a = await matchPromise(2).clearReject().toPromise();
+
+  assertEquals(a, 2);
+});
+
+Deno.test("PromiseMatcher.clearReject() :: returns null if value is none", async () => {
+  const a = await matchPromise(null as Option<number>).clearReject()
+    .toPromise();
+
+  assertEquals(a, null);
+});
+
+Deno.test("PromiseMatcher.clearReject() :: returns null if promise is rejected", async () => {
+  const a = await matchPromise(Promise.reject(2)).clearReject().toPromise();
+
+  assertEquals(a, null);
+});
+
+Deno.test("PromiseMatcher.clearReject() :: calls sideEffect function if provided and promise rejects", async () => {
+  let called = false;
+
+  const sideEffect = () => {
+    called = true;
+  };
+
+  const a = await matchPromise(Promise.reject(2)).clearReject(sideEffect)
+    .toPromise();
+
+  assert(called);
+});
+
+Deno.test("PromiseMatcher.clearReject() :: does not call sideEffect function if promise resolves", async () => {
+  let called = false;
+
+  const sideEffect = () => {
+    called = true;
+  };
+
+  const a = await matchPromise(Promise.resolve(2)).clearReject(sideEffect)
+    .toPromise();
+
+  assert(!called);
 });
