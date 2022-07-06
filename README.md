@@ -1,3 +1,5 @@
+__Note__: This is a downstream git-mirror of my personal [fossil](https://fossil-scm.org/) repository. Changes in git won't be sent back upstream.
+
 # Option
 
 Deno module inspired by Rusts `Option<T>` to help handling `null` and
