@@ -1,31 +1,10 @@
-import { isNone, match, Matcher, matchPromise, Option } from "./mod.ts";
+import { Option, UNWRAP_ERROR_MSG } from "./util.ts";
+import { match, Matcher } from "./matcher.ts";
 import {
   assert,
   assertEquals,
   assertThrows,
 } from "https://deno.land/std@0.147.0/testing/asserts.ts";
-
-const UNWRAP_ERROR_MSG = "Called unwrap on nil value";
-
-Deno.test("isNone :: returns true for null and undefined", () => {
-  const a = isNone(null);
-  const b = isNone(undefined);
-
-  assert(a);
-  assert(b);
-});
-
-Deno.test("isNone :: returns false for 'empty' values", () => {
-  const a = isNone("");
-  const b = isNone(0);
-  const c = isNone([]);
-  const d = isNone({});
-
-  assert(!a);
-  assert(!b);
-  assert(!c);
-  assert(!d);
-});
 
 Deno.test("Matcher.toOption :: returns value inside matcher", () => {
   const original: Option<string> = "testi";
@@ -226,17 +205,4 @@ Deno.test("Matcher.expect() :: throws if none", () => {
   assertThrows(() => {
     match(null).expect("This is fine");
   });
-});
-
-Deno.test("PromiseMatcher.map() :: maps value if it is some", async () => {
-  const a = await matchPromise(2).map((v) => v + 1).extract();
-
-  assertEquals(a, 3);
-});
-
-Deno.test("PromiseMatcher.map() :: does not map value if it is none", async () => {
-  const a = await matchPromise(null as Option<number>).map((v) => v + 1)
-    .extract();
-
-  assertEquals(a, null);
 });
