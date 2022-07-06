@@ -24,7 +24,7 @@ import {
 import { match } from "./match.ts";
 
 export class Matcher<T> {
-  constructor(protected _value: Readonly<Option<T>>) {}
+  constructor(protected _value: Option<T>) {}
 
   /**
    * Allows to resolve inner value with given callbacks
@@ -140,7 +140,7 @@ export class Matcher<T> {
    *
    * @param defaultValue Value to return if Matcher value is nil
    */
-  unwrapOr(defaultValue: T): Some<Readonly<T>> {
+  unwrapOr(defaultValue: T): Some<T> {
     if (isNone(this._value)) {
       return defaultValue;
     }
@@ -154,7 +154,7 @@ export class Matcher<T> {
    * This is not considered safe, you should consider using `.ok()` to work with
    * the value
    */
-  unwrap(): Some<Readonly<T>> | never {
+  unwrap(): Some<T> | never {
     if (isNone(this._value)) {
       throw new UnsafeOperationError(UNWRAP_ERROR_MSG);
     }
@@ -162,7 +162,7 @@ export class Matcher<T> {
     return this._value;
   }
 
-  expect(msg: string): Some<Readonly<T>> | never {
+  expect(msg: string): Some<T> | never {
     if (isNone(this._value)) {
       throw new UnsafeOperationError(msg);
     }
@@ -179,6 +179,6 @@ export class Matcher<T> {
   }
 
   toString() {
-    return (this._value ?? "null").toString();
+    return (this._value ?? "null") + '';
   }
 }
