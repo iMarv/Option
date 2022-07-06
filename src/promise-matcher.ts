@@ -31,7 +31,7 @@ export class PromiseMatcher<T> {
     );
   }
 
-  or<R>(fallback: Option<R>): PromiseMatcher<R> {
+  or<R>(fallback: Option<R> | PromiseOption<R>): PromiseMatcher<R> {
     return matchPromise(
       this._value.then(match).then((m) => m.or(fallback).toOption()),
     );
