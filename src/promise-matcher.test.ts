@@ -162,7 +162,7 @@ Deno.test("PromiseMatcher.clearReject() :: calls sideEffect function if provided
     called = true;
   };
 
-  const a = await matchPromise(Promise.reject(2)).clearReject(sideEffect)
+  await matchPromise(Promise.reject(2)).clearReject(sideEffect)
     .toPromise();
 
   assert(called);
@@ -175,7 +175,7 @@ Deno.test("PromiseMatcher.clearReject() :: does not call sideEffect function if 
     called = true;
   };
 
-  const a = await matchPromise(Promise.resolve(2)).clearReject(sideEffect)
+  await matchPromise(Promise.resolve(2)).clearReject(sideEffect)
     .toPromise();
 
   assert(!called);
