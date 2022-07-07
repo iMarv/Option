@@ -40,7 +40,7 @@ jobs:
 
       # Caching test file as it imports main file
       - name: Cache dependencies
-        run: deno cache *.test.ts
+        run: deno cache **/*.test.ts
 
       - name: Run tests
         run: deno test -A --doc
