@@ -126,10 +126,21 @@ export class Matcher<T> {
     return match<R>(fn(this._value));
   }
 
+  /**
+   * Applies map function to inner value or applies fallback value if inner
+   * value is nil
+   *
+   * @param mapFn
+   * @param fallback
+   */
   mapOr<R>(mapFn: (value: T) => Option<R>, fallback: R): Matcher<R> {
     return this.map(mapFn).or(fallback);
   }
 
+  /**
+   * Returns true if inner value is equal to given comparand
+   * @param comparand
+   */
   is(comparand: T): boolean {
     return comparand === this._value;
   }
@@ -162,6 +173,10 @@ export class Matcher<T> {
     return this._value;
   }
 
+  /**
+   * Returns inner value or throws UnsafeOperationError with given message if value is nil
+   * @param msg
+   */
   expect(msg: string): Some<T> | never {
     if (isNone(this._value)) {
       throw new UnsafeOperationError(msg);
@@ -170,14 +185,23 @@ export class Matcher<T> {
     return this._value;
   }
 
+  /**
+   * Returns blank option value
+   */
   toOption(): Option<T> {
     return this._value;
   }
 
+  /**
+   * Wraps `toOption` but using common function name
+   */
   toJSON() {
     return this.toOption();
   }
 
+  /**
+   * Tries to map inner value to string, if not successful returns "null" as string
+   */
   toString() {
     return (this._value ?? "null") + "";
   }
