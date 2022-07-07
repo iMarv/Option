@@ -1,4 +1,6 @@
-__Note__: This is a downstream git-mirror of my personal [fossil](https://fossil-scm.org/) repository. Changes in git won't be sent back upstream.
+**Note**: This is a downstream git-mirror of my personal
+[fossil](https://fossil-scm.org/) repository. Changes in git won't be sent back
+upstream.
 
 # Option
 
@@ -13,4 +15,3 @@ help of `match()` and the `Matcher` class.
 
 This allows solid type/null safety in your project without the fear of
 `cannot read property name of undefined`.
-

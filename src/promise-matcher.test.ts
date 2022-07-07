@@ -39,7 +39,8 @@ Deno.test("PromiseMatcher.or() :: returns fallback value if value is none", asyn
 });
 
 Deno.test("PromiseMatcher.or() :: returns fallback promise if value is none", async () => {
-  const a = await matchPromise(null as Option<number>).or(Promise.resolve(3)).toPromise();
+  const a = await matchPromise(null as Option<number>).or(Promise.resolve(3))
+    .toPromise();
 
   assertEquals(a, 3);
 });

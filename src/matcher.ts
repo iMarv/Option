@@ -179,6 +179,6 @@ export class Matcher<T> {
   }
 
   toString() {
-    return (this._value ?? "null") + '';
+    return (this._value ?? "null") + "";
   }
 }
